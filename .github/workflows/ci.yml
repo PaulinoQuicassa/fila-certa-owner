@@ -1,0 +1,134 @@
+name: CI/CD — Fila Certa (consola do dono)
+
+# Mesmo padrão já usado em fila-certa-staff: Qualidade → Build → Deploy →
+# Smoke Test. Sem suite de testes Supabase própria aqui -- as RPCs
+# owner_* partilham o mesmo backend já validado pela suite completa do
+# repo fila-certa-staff (supabase/migrations vive lá).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  quality:
+    name: Qualidade e segurança
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: TypeScript
+        run: npx tsc -b
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        env:
+          # Não secretas -- ver src/supabase.ts e .env.example (o
+          # controlo de acesso vive nas RPCs owner_* restritas a
+          # is_owner(), nunca na chave).
+          VITE_SUPABASE_URL: https://qdfpqispcntitvczybfl.supabase.co
+          VITE_SUPABASE_ANON_KEY: sb_publishable_HLelr-FOPvSL9a5w8_feUw_FfKIrOoQ
+        run: npm run build
+
+      - name: Confirmar que o URL do Supabase ficou embutido no bundle
+        run: |
+          set -e
+          if ! grep -rq "qdfpqispcntitvczybfl.supabase.co" dist/assets/*.js; then
+            echo "::error::VITE_SUPABASE_URL não ficou embutido no bundle -- a app publicada ficaria com ecrã em branco."
+            exit 1
+          fi
+          echo "OK: URL do Supabase presente no bundle."
+
+      - name: Sem segredos acidentais (service_role, .env, chaves privadas)
+        run: |
+          set -e
+          if git ls-files | grep -E '^\.env($|\.local$)'; then
+            echo "::error::Ficheiro .env/.env.local não deveria estar versionado."
+            exit 1
+          fi
+          if git grep -n "sb_secret_\|SUPABASE_SERVICE_ROLE_KEY\s*=\s*['\"]" -- src/; then
+            echo "::error::Possível service_role key ou segredo no código frontend."
+            exit 1
+          fi
+          if git grep -nE "BEGIN (RSA )?PRIVATE KEY" -- '*.ts' '*.tsx' '*.json' ':!package-lock.json'; then
+            echo "::error::Possível chave privada commitada."
+            exit 1
+          fi
+          echo "OK: nenhum segredo encontrado."
+
+      - name: Dependências vulneráveis (falha só em alto/crítico)
+        run: npm audit --audit-level=high || echo "::warning::npm audit encontrou avisos -- ver log acima (não bloqueante abaixo de 'high')."
+
+  deploy:
+    name: Deploy (GitHub Pages) + Smoke Test
+    needs: [quality]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Build para GitHub Pages (base path /fila-certa-owner/)
+        env:
+          VITE_SUPABASE_URL: https://qdfpqispcntitvczybfl.supabase.co
+          VITE_SUPABASE_ANON_KEY: sb_publishable_HLelr-FOPvSL9a5w8_feUw_FfKIrOoQ
+        run: npx tsc -b && npx vite build --base=/fila-certa-owner/
+
+      - name: Preparar artefacto (SPA fallback + .nojekyll)
+        run: |
+          cp dist/index.html dist/404.html
+          touch dist/.nojekyll
+
+      - name: Publicar em gh-pages
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch origin gh-pages || true
+          git worktree add /tmp/deploy origin/gh-pages 2>/dev/null || git worktree add -b gh-pages /tmp/deploy
+          rm -rf /tmp/deploy/*
+          cp -r dist/. /tmp/deploy/
+          cd /tmp/deploy
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Nada para publicar (build idêntico ao já publicado)."
+          else
+            git commit -m "deploy: ${{ github.sha }}"
+            git push origin HEAD:gh-pages
+          fi
+
+      - name: Smoke test pós-deploy
+        run: |
+          set -e
+          sleep 20
+          code=$(curl -s -o /tmp/index.html -w "%{http_code}" --max-time 20 https://paulinoquicassa.github.io/fila-certa-owner/)
+          test "$code" = "200" || { echo "::error::HTTP $code na app publicada."; exit 1; }
+          grep -q 'id="root"' /tmp/index.html || { echo "::error::index.html publicado não parece a app (sem #root)."; exit 1; }
+          js_path=$(grep -oE '/fila-certa-owner/assets/index-[^"]+\.js' /tmp/index.html | head -1)
+          test -n "$js_path" || { echo "::error::Não encontrei o script principal no index.html publicado."; exit 1; }
+          curl -s --max-time 20 "https://paulinoquicassa.github.io${js_path}" -o /tmp/index.js
+          grep -q "qdfpqispcntitvczybfl.supabase.co" /tmp/index.js || {
+            echo "::error::O bundle publicado não tem o URL do Supabase embutido.";
+            exit 1;
+          }
+          echo "OK: smoke test passou (HTTP 200, app carregada)."

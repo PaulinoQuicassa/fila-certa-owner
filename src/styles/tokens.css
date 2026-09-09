@@ -1,0 +1,74 @@
+/* Fila Certa — Consola do Dono. Paleta própria (violeta/grafite, em vez
+   do azul da app da equipa) para nunca se confundir visualmente com o
+   dashboard de gestor/agente -- este ecrã tem acesso total à
+   plataforma, o contraste visual é deliberado. */
+:root {
+  --fc-accent: #6D28D9;
+  --fc-accent-dark: #2E1065;
+  --fc-accent-light: #F1EAFB;
+
+  --fc-green: #16A66A;
+  --fc-green-light: #E9F8F1;
+
+  --fc-bg: #F7F6FA;
+  --fc-white: #FFFFFF;
+  --fc-text-primary: #241B36;
+  --fc-text-secondary: #6B647A;
+  --fc-border: #E3DEED;
+
+  --fc-danger: #E53935;
+  --fc-danger-bg: #FDEAE9;
+  --fc-orange: #F28C28;
+  --fc-orange-bg: #FEF0E3;
+
+  --fc-radius-sm: 8px;
+  --fc-radius-md: 12px;
+  --fc-radius-lg: 16px;
+  --fc-radius-xl: 24px;
+  --fc-radius-pill: 999px;
+
+  --fc-shadow-sm: 0 1px 2px rgba(46, 16, 101, 0.06);
+  --fc-shadow-md: 0 4px 16px rgba(46, 16, 101, 0.08);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: 'Inter', -apple-system, 'Segoe UI', Roboto, sans-serif;
+  background: var(--fc-bg);
+  color: var(--fc-text-primary);
+}
+
+button { font-family: inherit; cursor: pointer; border: none; background: none; }
+input, select { font-family: inherit; }
+
+.fc-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  border-radius: var(--fc-radius-md); padding: 13px 22px;
+  font-size: 15px; font-weight: 700;
+}
+.fc-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.fc-btn--primary { background: var(--fc-accent-dark); color: #fff; }
+.fc-btn--danger { background: var(--fc-danger); color: #fff; }
+.fc-btn--secondary {
+  background: var(--fc-white); color: var(--fc-accent-dark);
+  border: 1.5px solid var(--fc-border); font-size: 14px; padding: 11px 16px;
+}
+
+.fc-card {
+  background: var(--fc-white);
+  border-radius: var(--fc-radius-xl);
+  box-shadow: var(--fc-shadow-sm);
+}
+
+.fc-input {
+  padding: 11px 14px; border-radius: var(--fc-radius-md);
+  border: 1.5px solid var(--fc-border); font-size: 14.5px; width: 100%;
+}
+
+.fc-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  border-radius: var(--fc-radius-pill); padding: 6px 14px;
+  font-size: 13px; font-weight: 700;
+}

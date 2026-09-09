@@ -47,12 +47,16 @@ function BranchBlock({ branch, onChanged }: { branch: Branch; onChanged: () => v
   const [newId, setNewId] = useState('');
   const [newLabel, setNewLabel] = useState('');
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
 
   async function refreshCounters() {
     setLoading(true);
     try {
       setCounters(await listCounters(branch.institutionId, branch.id));
+      setFetchError(null);
+    } catch (err) {
+      setFetchError(err instanceof Error ? err.message : 'Não foi possível carregar os balcões.');
     } finally {
       setLoading(false);
     }
@@ -65,14 +69,14 @@ function BranchBlock({ branch, onChanged }: { branch: Branch; onChanged: () => v
   async function handleAddCounter(e: FormEvent) {
     e.preventDefault();
     setBusy(true);
-    setError(null);
+    setFormError(null);
     try {
       await createCounter(branch.institutionId, branch.id, newId.trim(), newLabel.trim());
       setNewId('');
       setNewLabel('');
       await refreshCounters();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Não foi possível criar o balcão.');
+      setFormError(err instanceof Error ? err.message : 'Não foi possível criar o balcão.');
     } finally {
       setBusy(false);
     }
@@ -104,6 +108,8 @@ function BranchBlock({ branch, onChanged }: { branch: Branch; onChanged: () => v
         <div style={{ padding: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
           {loading ? (
             <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>A carregar…</div>
+          ) : fetchError ? (
+            <div style={{ fontSize: 12, color: 'var(--red)' }}>{fetchError}</div>
           ) : counters.length === 0 ? (
             <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Ainda sem balcões.</div>
           ) : (
@@ -114,7 +120,7 @@ function BranchBlock({ branch, onChanged }: { branch: Branch; onChanged: () => v
             <input className="fc-input" placeholder="Rótulo (ex.: Balcão 4)" required value={newLabel} onChange={(e) => setNewLabel(e.target.value)} style={{ flex: 1 }} />
             <button type="submit" disabled={busy} className="fc-btn fc-btn--secondary">+</button>
           </form>
-          {error && <div style={{ fontSize: 11.5, color: 'var(--red)' }}>{error}</div>}
+          {formError && <div style={{ fontSize: 11.5, color: 'var(--red)' }}>{formError}</div>}
         </div>
       )}
     </div>
@@ -128,11 +134,15 @@ export function BranchesPanel({ institutionId, institutionName, onClose }: { ins
   const [newName, setNewName] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   async function refresh() {
     setLoading(true);
     try {
       setBranches(await listBranches(institutionId));
+      setFetchError(null);
+    } catch (err) {
+      setFetchError(err instanceof Error ? err.message : 'Não foi possível carregar as filiais.');
     } finally {
       setLoading(false);
     }
@@ -169,6 +179,8 @@ export function BranchesPanel({ institutionId, institutionName, onClose }: { ins
       <div style={{ maxHeight: 440, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
         {loading ? (
           <FieldLabel>A carregar…</FieldLabel>
+        ) : fetchError ? (
+          <div style={{ fontSize: 12.5, color: 'var(--red)' }}>{fetchError}</div>
         ) : branches.length === 0 ? (
           <div style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>Ainda sem filiais.</div>
         ) : (

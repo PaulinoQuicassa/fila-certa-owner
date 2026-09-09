@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { assignStaff, listAccessProfiles, listAllStaff, listBranches, listInstitutions, removeStaff, setStaffProfile } from '../lib/admin';
+import { assignStaff, listAccessProfiles, listAllBranches, listAllStaff, listBranches, listInstitutions, removeStaff, setStaffProfile } from '../lib/admin';
 import { FieldLabel } from './SidePanel';
 import type { AccessProfile, Branch, Institution, StaffMember, StaffRole } from '../types';
 
@@ -7,6 +7,7 @@ export function Staff() {
   const [staff, setStaff] = useState<StaffMember[]>([]);
   const [institutions, setInstitutions] = useState<Institution[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
+  const [allBranches, setAllBranches] = useState<Branch[]>([]);
   const [profiles, setProfiles] = useState<AccessProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -18,13 +19,21 @@ export function Staff() {
   const [institutionId, setInstitutionId] = useState('');
   const [branchId, setBranchId] = useState('');
 
+  const institutionName = (id: string) => institutions.find((i) => i.id === id)?.name ?? id;
+  const branchName = (institution: string, branch: string) =>
+    allBranches.find((b) => b.institutionId === institution && b.id === branch)?.name ?? branch;
+
   async function refresh() {
     setLoading(true);
     try {
-      const [s, i, p] = await Promise.all([listAllStaff(), listInstitutions(), listAccessProfiles()]);
+      const [s, i, p, ab] = await Promise.all([listAllStaff(), listInstitutions(), listAccessProfiles(), listAllBranches()]);
       setStaff(s);
       setInstitutions(i);
       setProfiles(p);
+      setAllBranches(ab);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Não foi possível carregar os colaboradores.');
     } finally {
       setLoading(false);
     }
@@ -158,8 +167,8 @@ export function Staff() {
                       {s.role === 'manager' ? 'Gestor' : 'Agente'}
                     </span>
                   </td>
-                  <td style={{ padding: '12px 20px', color: 'var(--text-secondary)', fontSize: 13 }}>{s.institutionId}</td>
-                  <td style={{ padding: '12px 20px', color: 'var(--text-secondary)', fontSize: 13 }}>{s.branchId}</td>
+                  <td style={{ padding: '12px 20px', color: 'var(--text-secondary)', fontSize: 13 }}>{institutionName(s.institutionId)}</td>
+                  <td style={{ padding: '12px 20px', color: 'var(--text-secondary)', fontSize: 13 }}>{branchName(s.institutionId, s.branchId)}</td>
                   <td style={{ padding: '12px 20px' }}>
                     <select className="fc-input" style={{ fontSize: 12.5, padding: '6px 8px' }} value={s.accessProfileId ?? ''} onChange={(e) => handleProfileChange(s, e.target.value)}>
                       <option value="">— nenhum —</option>

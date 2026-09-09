@@ -20,6 +20,9 @@ export function Owners() {
       const [o, p] = await Promise.all([listOwners(), listAccessProfiles()]);
       setOwners(o);
       setProfiles(p);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Não foi possível carregar os donos.');
     } finally {
       setLoading(false);
     }

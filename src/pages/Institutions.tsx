@@ -31,6 +31,9 @@ export function Institutions() {
     setLoading(true);
     try {
       setCompanies(await listInstitutionsOverview());
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Não foi possível carregar as empresas.');
     } finally {
       setLoading(false);
     }

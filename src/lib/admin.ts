@@ -68,6 +68,15 @@ export async function listInstitutions(): Promise<Institution[]> {
   return (data ?? []).map((r) => ({ id: r.id, name: r.name }));
 }
 
+/** Todas as filiais, de todas as instituições -- só para resolver
+ * institutionId/branchId a nomes nas tabelas de Colaboradores/Donos
+ * (essas RPCs devolvem os ids em bruto, não os nomes). */
+export async function listAllBranches(): Promise<Branch[]> {
+  const { data, error } = await supabase.from('branches').select('id, institution_id, name');
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((r) => ({ id: r.id, institutionId: r.institution_id, name: r.name }));
+}
+
 // --- Filiais / balcões (painel "Gerir balcões") -------------------------------
 
 export async function listBranches(institutionId: string): Promise<Branch[]> {

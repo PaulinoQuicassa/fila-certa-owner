@@ -65,6 +65,9 @@ export function AccessProfiles() {
     setLoading(true);
     try {
       setProfiles(await listAccessProfiles());
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Não foi possível carregar os perfis.');
     } finally {
       setLoading(false);
     }

@@ -33,11 +33,11 @@ export function Login() {
         style={{ width: 380, padding: 36, display: 'flex', flexDirection: 'column', gap: 20 }}
       >
         <div>
-          <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--fc-accent-dark)' }}>Fila Certa</div>
-          <div style={{ fontSize: 14, color: 'var(--fc-text-secondary)', marginTop: 4 }}>Consola do dono</div>
+          <div style={{ fontFamily: 'var(--font-head)', fontSize: 22, fontWeight: 700, color: 'var(--brand-blue)' }}>Fila Certa</div>
+          <div style={{ fontSize: 14, color: 'var(--text-muted)', marginTop: 4 }}>Owner</div>
         </div>
 
-        <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 13, fontWeight: 600, color: 'var(--fc-text-secondary)' }}>
+        <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>
           Email
           <input
             type="email"
@@ -48,7 +48,7 @@ export function Login() {
           />
         </label>
 
-        <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 13, fontWeight: 600, color: 'var(--fc-text-secondary)' }}>
+        <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>
           Palavra-passe
           <input
             type="password"
@@ -59,9 +59,9 @@ export function Login() {
           />
         </label>
 
-        {error && <div style={{ fontSize: 13, color: 'var(--fc-danger)' }}>{error}</div>}
+        {error && <div style={{ fontSize: 13, color: 'var(--red)' }}>{error}</div>}
 
-        <button type="submit" disabled={busy} className="fc-btn fc-btn--primary">
+        <button type="submit" disabled={busy} className="fc-btn fc-btn--primary" style={{ width: '100%', padding: 12, fontSize: 14 }}>
           {busy ? 'A entrar…' : 'Entrar'}
         </button>
       </form>

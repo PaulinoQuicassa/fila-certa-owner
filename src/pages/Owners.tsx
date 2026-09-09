@@ -1,11 +1,13 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { addOwner, listOwners, removeOwner } from '../lib/admin';
+import { addOwner, listAccessProfiles, listOwners, removeOwner, setOwnerProfile } from '../lib/admin';
 import { useAuth } from '../auth/AuthContext';
-import type { Owner } from '../types';
+import { FieldLabel } from './SidePanel';
+import type { AccessProfile, Owner } from '../types';
 
 export function Owners() {
   const { profile } = useAuth();
   const [owners, setOwners] = useState<Owner[]>([]);
+  const [profiles, setProfiles] = useState<AccessProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
@@ -15,7 +17,9 @@ export function Owners() {
   async function refresh() {
     setLoading(true);
     try {
-      setOwners(await listOwners());
+      const [o, p] = await Promise.all([listOwners(), listAccessProfiles()]);
+      setOwners(o);
+      setProfiles(p);
     } finally {
       setLoading(false);
     }
@@ -52,48 +56,64 @@ export function Owners() {
     }
   }
 
+  async function handleProfileChange(owner: Owner, profileId: string) {
+    setError(null);
+    try {
+      await setOwnerProfile(owner.id, profileId || null);
+      await refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Não foi possível atribuir o perfil.');
+    }
+  }
+
   return (
     <>
-      <div style={{ fontSize: 22, fontWeight: 800 }}>Donos da plataforma</div>
-      <div style={{ fontSize: 12.5, color: 'var(--fc-text-secondary)', marginTop: -12 }}>
-        Acesso total, sem âmbito de filial. A conta de login também tem de já existir no Dashboard do Supabase.
+      <div className="fc-card" style={{ padding: 20 }}>
+        <div style={{ fontSize: 12.5, color: 'var(--text-muted)', marginBottom: 16 }}>
+          Acesso total, sem âmbito de filial. A conta de login também tem de já existir no Dashboard do Supabase.
+        </div>
+        <form onSubmit={handleAdd} style={{ display: 'flex', gap: 12, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+          <div style={{ flex: '2 1 220px' }}>
+            <FieldLabel>Email da conta já criada</FieldLabel>
+            <input type="email" className="fc-input" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="dono@exemplo.test" />
+          </div>
+          <div style={{ flex: '2 1 200px' }}>
+            <FieldLabel>Nome</FieldLabel>
+            <input className="fc-input" required value={name} onChange={(e) => setName(e.target.value)} placeholder="Nome completo" />
+          </div>
+          <button type="submit" disabled={busy} className="fc-btn fc-btn--primary">
+            {busy ? 'A adicionar…' : 'Adicionar dono'}
+          </button>
+        </form>
       </div>
 
-      <form onSubmit={handleAdd} className="fc-card" style={{ padding: 20, display: 'flex', gap: 12, alignItems: 'flex-end', flexWrap: 'wrap' }}>
-        <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 12.5, fontWeight: 600, color: 'var(--fc-text-secondary)', flex: '2 1 220px' }}>
-          Email da conta já criada
-          <input type="email" className="fc-input" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="dono@exemplo.test" />
-        </label>
-        <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 12.5, fontWeight: 600, color: 'var(--fc-text-secondary)', flex: '2 1 200px' }}>
-          Nome
-          <input className="fc-input" required value={name} onChange={(e) => setName(e.target.value)} placeholder="Nome completo" />
-        </label>
-        <button type="submit" disabled={busy} className="fc-btn fc-btn--primary">
-          {busy ? 'A adicionar…' : 'Adicionar dono'}
-        </button>
-      </form>
-
       {error && (
-        <div className="fc-card" style={{ background: 'var(--fc-danger-bg)', boxShadow: 'none', padding: '12px 16px', fontSize: 13.5, color: 'var(--fc-danger)' }}>
-          {error}
-        </div>
+        <div className="fc-card" style={{ background: 'var(--red-bg)', padding: '12px 16px', fontSize: 13.5, color: 'var(--red)' }}>{error}</div>
       )}
 
       <div className="fc-card" style={{ overflow: 'hidden' }}>
         {loading ? (
-          <div style={{ padding: 24, fontSize: 13.5, color: 'var(--fc-text-secondary)' }}>A carregar…</div>
+          <div style={{ padding: 24, fontSize: 13.5, color: 'var(--text-muted)' }}>A carregar…</div>
         ) : (
           owners.map((o) => (
-            <div key={o.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid var(--fc-border)' }}>
+            <div key={o.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderTop: '1px solid var(--border)', gap: 16 }}>
               <div>
-                <div style={{ fontWeight: 700 }}>
-                  {o.name} {o.id === profile?.uid && <span style={{ fontWeight: 500, color: 'var(--fc-text-secondary)', fontSize: 12.5 }}>(você)</span>}
+                <div style={{ fontWeight: 700, fontSize: 13.5 }}>
+                  {o.name} {o.id === profile?.uid && <span style={{ fontWeight: 500, color: 'var(--text-muted)', fontSize: 12.5 }}>(você)</span>}
                 </div>
-                <div style={{ fontSize: 12.5, color: 'var(--fc-text-secondary)' }}>{o.email}</div>
+                <div style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>{o.email}</div>
               </div>
-              <button className="fc-btn fc-btn--secondary" style={{ color: 'var(--fc-danger)' }} onClick={() => handleRemove(o)}>
-                Remover
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <select className="fc-input" style={{ fontSize: 12.5, padding: '6px 8px', width: 180 }} value={o.accessProfileId ?? ''} onChange={(e) => handleProfileChange(o, e.target.value)}>
+                  <option value="">— nenhum —</option>
+                  {profiles.map((p) => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+                <button className="fc-btn fc-btn--outline" style={{ color: 'var(--red)', fontSize: 12 }} onClick={() => handleRemove(o)}>
+                  Remover
+                </button>
+              </div>
             </div>
           ))
         )}

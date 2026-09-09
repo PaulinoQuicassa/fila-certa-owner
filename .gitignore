@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+# Mockup de design de referência (não é código da app -- ver o seu
+# próprio README.md, "treat it as a REFERENCE MOCKUP, not production code").
+/AppOwnerFilacerta/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

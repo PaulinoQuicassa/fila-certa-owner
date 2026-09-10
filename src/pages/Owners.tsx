@@ -49,6 +49,10 @@ export function Owners() {
   }
 
   async function handleRemove(owner: Owner) {
+    if (owner.id === profile?.uid) {
+      alert('Não pode remover o seu próprio acesso de dono. Peça a outro dono para o fazer.');
+      return;
+    }
     if (!confirm(`Remover o acesso de dono de "${owner.name}"?`)) return;
     setError(null);
     try {

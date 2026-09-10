@@ -42,18 +42,18 @@ export async function listInstitutionsOverview(): Promise<InstitutionOverview[]>
 }
 
 export async function createInstitution(
-  id: string, name: string, nif: string, type: string, pricePerCounterKz: number,
+  id: string, name: string, nif: string, type: string | null, pricePerCounterKz: number,
 ) {
   await rpc('owner_create_institution', {
-    p_id: id, p_name: name, p_nif: nif || null, p_type: type || null, p_price_per_counter_kz: pricePerCounterKz,
+    p_id: id, p_name: name, p_nif: nif || null, p_type: type, p_price_per_counter_kz: pricePerCounterKz,
   });
 }
 
 export async function updateInstitution(
-  id: string, name: string, nif: string, type: string, pricePerCounterKz: number, billingStatus: BillingStatus,
+  id: string, name: string, nif: string, type: string | null, pricePerCounterKz: number, billingStatus: BillingStatus,
 ) {
   await rpc('owner_update_institution', {
-    p_id: id, p_name: name, p_nif: nif || null, p_type: type || null,
+    p_id: id, p_name: name, p_nif: nif || null, p_type: type,
     p_price_per_counter_kz: pricePerCounterKz, p_billing_status: billingStatus,
   });
 }
@@ -122,7 +122,7 @@ export async function deleteCounter(institutionId: string, branchId: string, id:
 
 type StaffRow = {
   id: string; email: string; name: string; role: StaffRole;
-  institution_id: string; branch_id: string; counter_id: string | null;
+  institution_id: string; branch_id: string | null; counter_id: string | null;
   access_profile_id: string | null; access_profile_name: string | null;
 };
 
@@ -136,7 +136,7 @@ export async function listAllStaff(): Promise<StaffMember[]> {
 }
 
 export async function assignStaff(
-  email: string, name: string, role: StaffRole, institutionId: string, branchId: string,
+  email: string, name: string, role: StaffRole, institutionId: string, branchId: string | null,
 ) {
   await rpc('owner_assign_staff', {
     p_email: email, p_name: name, p_role: role, p_institution_id: institutionId, p_branch_id: branchId,

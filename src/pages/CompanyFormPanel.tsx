@@ -13,7 +13,7 @@ export function CompanyFormPanel({ existing, onClose, onSaved }: { existing: Ins
   const [id, setId] = useState(existing?.id ?? '');
   const [name, setName] = useState(existing?.name ?? '');
   const [nif, setNif] = useState(existing?.nif ?? '');
-  const [type, setType] = useState<string>(existing?.type ?? INSTITUTION_TYPES[0]);
+  const [type, setType] = useState<string | null>(existing?.type ?? null);
   const [pricePerCounter, setPricePerCounter] = useState(existing?.pricePerCounterKz ?? 45000);
   const [billingStatus, setBillingStatus] = useState<BillingStatus>(existing?.billingStatus ?? 'trial');
   const [busy, setBusy] = useState(false);
@@ -59,6 +59,9 @@ export function CompanyFormPanel({ existing, onClose, onSaved }: { existing: Ins
 
         <div>
           <FieldLabel>Tipo de instituição</FieldLabel>
+          {type === null && (
+            <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginBottom: 6 }}>Ainda sem tipo definido.</div>
+          )}
           <PillSelect options={INSTITUTION_TYPES} value={type as (typeof INSTITUTION_TYPES)[number]} onChange={setType} />
         </div>
 

@@ -1,4 +1,4 @@
-export type StaffRole = 'agent' | 'manager';
+export type StaffRole = 'agent' | 'manager' | 'director';
 export type BillingStatus = 'active' | 'trial' | 'suspended';
 export type ProfileScope = 'global' | 'institution';
 
@@ -45,7 +45,7 @@ export interface StaffMember {
   name: string;
   role: StaffRole;
   institutionId: string;
-  branchId: string;
+  branchId: string | null; // null só para director -- vê a instituição toda, não uma filial
   counterId: string | null;
   accessProfileId: string | null;
   accessProfileName: string | null;

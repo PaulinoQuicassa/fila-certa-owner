@@ -19,9 +19,14 @@ export function Staff() {
   const [institutionId, setInstitutionId] = useState('');
   const [branchId, setBranchId] = useState('');
 
+  const ROLE_LABEL: Record<StaffRole, string> = { agent: 'Agente', manager: 'Gestor', director: 'Direção Geral' };
+  const isDirector = role === 'director';
+
   const institutionName = (id: string) => institutions.find((i) => i.id === id)?.name ?? id;
-  const branchName = (institution: string, branch: string) =>
-    allBranches.find((b) => b.institutionId === institution && b.id === branch)?.name ?? branch;
+  const branchName = (institution: string, branch: string | null) => {
+    if (branch === null) return '—';
+    return allBranches.find((b) => b.institutionId === institution && b.id === branch)?.name ?? branch;
+  };
 
   async function refresh() {
     setLoading(true);
@@ -49,10 +54,14 @@ export function Staff() {
       setBranchId('');
       return;
     }
-    listBranches(institutionId).then((b) => {
-      setBranches(b);
-      setBranchId(b[0]?.id ?? '');
-    });
+    listBranches(institutionId)
+      .then((b) => {
+        setBranches(b);
+        setBranchId(b[0]?.id ?? '');
+      })
+      .catch((err) => {
+        setError(err instanceof Error ? err.message : 'Não foi possível carregar as filiais.');
+      });
   }, [institutionId]);
 
   async function handleAssign(e: FormEvent) {
@@ -60,7 +69,7 @@ export function Staff() {
     setError(null);
     setBusy(true);
     try {
-      await assignStaff(email.trim(), name.trim(), role, institutionId, branchId);
+      await assignStaff(email.trim(), name.trim(), role, institutionId, isDirector ? null : branchId);
       setEmail('');
       setName('');
       await refresh();
@@ -108,11 +117,12 @@ export function Staff() {
             <FieldLabel>Nome</FieldLabel>
             <input className="fc-input" required value={name} onChange={(e) => setName(e.target.value)} placeholder="Nome completo" />
           </div>
-          <div style={{ flex: '1 1 140px' }}>
+          <div style={{ flex: '1 1 160px' }}>
             <FieldLabel>Perfil operacional</FieldLabel>
             <select className="fc-input" value={role} onChange={(e) => setRole(e.target.value as StaffRole)}>
               <option value="agent">Agente</option>
               <option value="manager">Gestor</option>
+              <option value="director">Direção Geral</option>
             </select>
           </div>
           <div style={{ flex: '1 1 180px' }}>
@@ -124,15 +134,22 @@ export function Staff() {
               ))}
             </select>
           </div>
-          <div style={{ flex: '1 1 180px' }}>
-            <FieldLabel>Filial</FieldLabel>
-            <select className="fc-input" required value={branchId} onChange={(e) => setBranchId(e.target.value)} disabled={branches.length === 0}>
-              <option value="">— escolher —</option>
-              {branches.map((b) => (
-                <option key={b.id} value={b.id}>{b.name}</option>
-              ))}
-            </select>
-          </div>
+          {!isDirector && (
+            <div style={{ flex: '1 1 180px' }}>
+              <FieldLabel>Filial</FieldLabel>
+              <select className="fc-input" required value={branchId} onChange={(e) => setBranchId(e.target.value)} disabled={branches.length === 0}>
+                <option value="">— escolher —</option>
+                {branches.map((b) => (
+                  <option key={b.id} value={b.id}>{b.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
+          {isDirector && (
+            <div style={{ flex: '1 1 180px', fontSize: 12, color: 'var(--text-muted)', alignSelf: 'center' }}>
+              Direção Geral vê todas as filiais desta instituição — sem filial a escolher.
+            </div>
+          )}
           <button type="submit" disabled={busy} className="fc-btn fc-btn--primary">
             {busy ? 'A atribuir…' : 'Atribuir'}
           </button>
@@ -164,7 +181,7 @@ export function Staff() {
                   <td style={{ padding: '12px 20px', color: 'var(--text-secondary)', fontSize: 13 }}>{s.email}</td>
                   <td style={{ padding: '12px 20px' }}>
                     <span className="fc-pill" style={{ background: 'var(--surface-alt)', color: 'var(--text-secondary)' }}>
-                      {s.role === 'manager' ? 'Gestor' : 'Agente'}
+                      {ROLE_LABEL[s.role]}
                     </span>
                   </td>
                   <td style={{ padding: '12px 20px', color: 'var(--text-secondary)', fontSize: 13 }}>{institutionName(s.institutionId)}</td>

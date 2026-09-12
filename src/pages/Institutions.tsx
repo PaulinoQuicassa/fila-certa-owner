@@ -25,6 +25,7 @@ export function Institutions() {
   const [filter, setFilter] = useState<'todas' | BillingStatus>('todas');
   const [panel, setPanel] = useState<{ kind: 'nova' } | { kind: 'editar'; company: InstitutionOverview } | { kind: 'balcoes'; company: InstitutionOverview } | null>(null);
   const [confirmRemoveId, setConfirmRemoveId] = useState<string | null>(null);
+  const [busyRemoveId, setBusyRemoveId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function refresh() {
@@ -57,7 +58,9 @@ export function Institutions() {
   }, [companies]);
 
   async function handleRemove(company: InstitutionOverview) {
+    if (busyRemoveId) return;
     setError(null);
+    setBusyRemoveId(company.id);
     try {
       await deleteInstitution(company.id);
       setConfirmRemoveId(null);
@@ -65,6 +68,8 @@ export function Institutions() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Não foi possível remover.');
       setConfirmRemoveId(null);
+    } finally {
+      setBusyRemoveId(null);
     }
   }
 
@@ -139,8 +144,22 @@ export function Institutions() {
                     {confirmRemoveId === c.id ? (
                       <>
                         <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Remover?</span>
-                        <button onClick={() => handleRemove(c)} className="fc-btn fc-btn--danger" style={{ padding: '5px 11px' }}>Sim</button>
-                        <button onClick={() => setConfirmRemoveId(null)} className="fc-btn fc-btn--outline" style={{ padding: '5px 11px' }}>Cancelar</button>
+                        <button
+                          onClick={() => handleRemove(c)}
+                          disabled={busyRemoveId === c.id}
+                          className="fc-btn fc-btn--danger"
+                          style={{ padding: '5px 11px' }}
+                        >
+                          {busyRemoveId === c.id ? 'A remover…' : 'Sim'}
+                        </button>
+                        <button
+                          onClick={() => setConfirmRemoveId(null)}
+                          disabled={busyRemoveId === c.id}
+                          className="fc-btn fc-btn--outline"
+                          style={{ padding: '5px 11px' }}
+                        >
+                          Cancelar
+                        </button>
                       </>
                     ) : (
                       <>

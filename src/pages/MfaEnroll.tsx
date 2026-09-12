@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { supabase } from '../supabase';
 import { useAuth } from '../auth/AuthContext';
+import { reportError } from '../sentry';
 
 // Ecrã bloqueante -- Fase 6: "MFA obrigatório para o dono". Aparece
 // sempre que a conta nunca teve um factor TOTP verificado; não existe
@@ -22,6 +23,7 @@ export function MfaEnroll() {
       const { data, error: enrollError } = await supabase.auth.mfa.enroll({ factorType: 'totp' });
       if (cancelled) return;
       if (enrollError || !data) {
+        reportError(enrollError ?? new Error('mfa-enroll-no-data'), { flow: 'owner_mfa_enroll_init' });
         setLoadError('Não foi possível iniciar a inscrição de MFA. Tenta recarregar a página.');
         return;
       }

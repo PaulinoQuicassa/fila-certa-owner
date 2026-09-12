@@ -1,4 +1,5 @@
 import { supabase } from '../supabase';
+import { reportError } from '../sentry';
 import type {
   AccessProfile,
   Branch,
@@ -14,7 +15,14 @@ import type {
 
 async function rpc<T>(fn: string, args: Record<string, unknown>): Promise<T> {
   const { data, error } = await supabase.rpc(fn, args);
-  if (error) throw new Error(error.message);
+  if (error) {
+    // Todas as RPCs de dono passam por aqui -- ponto único para
+    // monitorizar falhas de operações privilegiadas (Fase 16). `args`
+    // nunca contém segredos (emails/ids/nomes), mas passa pela
+    // redacção de `sentry.ts` na mesma, por segurança.
+    reportError(new Error(error.message), { rpc: fn, args });
+    throw new Error(error.message);
+  }
   return data as T;
 }
 

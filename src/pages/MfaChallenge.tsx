@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { supabase } from '../supabase';
 import { useAuth } from '../auth/AuthContext';
+import { reportError } from '../sentry';
 
 // Pedido do código a cada novo login (Fase 6) -- a conta já tem um
 // factor TOTP verificado (senão seria MfaEnroll), mas esta sessão
@@ -21,6 +22,7 @@ export function MfaChallenge() {
       if (cancelled) return;
       const verified = data?.totp.find((f) => f.status === 'verified');
       if (listError || !verified) {
+        reportError(listError ?? new Error('mfa-challenge-no-verified-factor'), { flow: 'owner_mfa_challenge_init' });
         setLoadError('Não foi possível carregar o factor de MFA. Tenta recarregar a página.');
         return;
       }

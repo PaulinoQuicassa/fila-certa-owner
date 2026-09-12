@@ -42,6 +42,7 @@ jobs:
           # is_owner(), nunca na chave).
           VITE_SUPABASE_URL: https://qdfpqispcntitvczybfl.supabase.co
           VITE_SUPABASE_ANON_KEY: sb_publishable_HLelr-FOPvSL9a5w8_feUw_FfKIrOoQ
+          VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
         run: npm run build
 
       - name: Confirmar que o URL do Supabase ficou embutido no bundle
@@ -92,6 +93,7 @@ jobs:
         env:
           VITE_SUPABASE_URL: https://qdfpqispcntitvczybfl.supabase.co
           VITE_SUPABASE_ANON_KEY: sb_publishable_HLelr-FOPvSL9a5w8_feUw_FfKIrOoQ
+          VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
         run: npx tsc -b && npx vite build --base=/fila-certa-owner/
 
       - name: Preparar artefacto (SPA fallback + .nojekyll)

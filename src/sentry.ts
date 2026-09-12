@@ -1,13 +1,12 @@
 import * as Sentry from '@sentry/react';
 
-// Ao contrário de fila-certa-staff/projectogestaodefilas (que já têm
-// projecto Sentry próprio), a consola do dono ainda não tem nenhum --
-// por isso a DSN vem de uma variável de ambiente em vez de um valor
-// fixo aqui: sem ela, initSentry() não faz nada (a consola continua a
-// funcionar normalmente, só sem observabilidade) em vez de falhar ou
-// de inventar/reutilizar a DSN de outro projecto. Ver
-// docs/observability.md para o passo de configuração.
-const SENTRY_DSN = import.meta.env.VITE_SENTRY_DSN;
+// DSN própria via VITE_SENTRY_DSN; se faltar, reutiliza o projecto
+// Synovaris / fila-certa-staff (mesma decisão das Edge Functions em
+// docs/observability.md — a DSN não é secreta). Sem isto a consola
+// publicada ficava sem observabilidade até alguém configurar um secret.
+const SENTRY_DSN =
+  import.meta.env.VITE_SENTRY_DSN ||
+  'https://c2c9bf2d35932d531cf3948ea40bacd2@o4512046055161856.ingest.us.sentry.io/4512046087208960';
 
 const REDACT_KEY_PATTERN = /token|password|senha|secret|otp|c[oó]digo/i;
 const PHONE_PATTERN = /(\+?\d[\d\s-]{7,}\d)/g;
@@ -41,10 +40,6 @@ function redactEvent(event: Sentry.ErrorEvent): Sentry.ErrorEvent {
 }
 
 export function initSentry() {
-  if (!SENTRY_DSN) {
-    console.warn('VITE_SENTRY_DSN em falta -- observabilidade desligada (ver docs/observability.md).');
-    return;
-  }
   Sentry.init({
     dsn: SENTRY_DSN,
     environment: import.meta.env.MODE,
@@ -59,8 +54,7 @@ export function initSentry() {
  * `context` passa sempre pela redacção de `beforeSend`, mas nunca deve
  * conter propositadamente password/token/código MFA/telefone completo
  * -- a redacção é uma rede de segurança, não uma licença para passar
- * isso aqui. Sem DSN configurada, é um no-op seguro. */
+ * isso aqui. */
 export function reportError(error: unknown, context?: Record<string, unknown>) {
-  if (!SENTRY_DSN) return;
   Sentry.captureException(error, context ? { extra: context } : undefined);
 }

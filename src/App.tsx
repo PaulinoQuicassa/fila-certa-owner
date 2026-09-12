@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { AuthProvider, useAuth } from './auth/AuthContext';
 import { Login } from './pages/Login';
+import { MfaEnroll } from './pages/MfaEnroll';
+import { MfaChallenge } from './pages/MfaChallenge';
 import { Layout, type TabId } from './pages/Layout';
 import { Institutions } from './pages/Institutions';
 import { AccessProfiles } from './pages/AccessProfiles';
@@ -29,8 +31,15 @@ export default function App() {
 }
 
 function Gate() {
-  const { user, profile, loading } = useAuth();
+  const { user, profile, loading, mfaState } = useAuth();
   if (loading) return null;
   if (!user || !profile) return <Login />;
+  // MFA obrigatório (Fase 6) -- nenhum destes dois ecrãs pode ser
+  // saltado para chegar à consola; 'checking' também bloqueia
+  // (evita mostrar a consola por uma fracção de segundo antes de
+  // sabermos o estado real de MFA desta sessão).
+  if (mfaState === 'checking') return null;
+  if (mfaState === 'enroll-required') return <MfaEnroll />;
+  if (mfaState === 'challenge-required') return <MfaChallenge />;
   return <OwnerConsole />;
 }

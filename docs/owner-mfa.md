@@ -4,6 +4,18 @@ Mecanismo real da Auth do Supabase (TOTP), nunca um segundo factor
 local/inventado. Ver `fila-certa-staff/supabase/migrations/20260912140000_owner_mfa_enforcement.sql`
 para a aplicação do lado do servidor.
 
+## Pendente de configuração externa
+
+O CLI local (`supabase/config.toml`, `[auth.mfa.totp]`) já activa
+`enroll_enabled`/`verify_enabled` -- é o que os testes de CI usam. Isso
+**não** activa nada em produção: no projecto Supabase real, é preciso
+activar manualmente em **Authentication → Sign In / Providers →
+Multi-Factor Authentication → Authenticator App (TOTP)**. O próprio
+template de configuração do Supabase nota que MFA "está disponível no
+plano Pro" -- se o projecto de produção estiver no plano gratuito, a
+inscrição TOTP pode ficar bloqueada até fazer upgrade; confirmar isso
+antes de assumir que o ecrã `MfaEnroll` vai funcionar em produção.
+
 ## Fluxo
 
 1. **Login** (`Login.tsx`) — email + password, como antes.

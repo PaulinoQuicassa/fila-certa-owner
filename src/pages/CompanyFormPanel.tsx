@@ -43,7 +43,18 @@ export function CompanyFormPanel({ existing, onClose, onSaved }: { existing: Ins
         {!existing && (
           <div>
             <FieldLabel>Identificador (ex.: bfa)</FieldLabel>
-            <input className="fc-input" required value={id} onChange={(e) => setId(e.target.value)} placeholder="id-curto" />
+            <input
+              className="fc-input"
+              required
+              pattern="[a-z0-9-]{2,40}"
+              title="Só letras minúsculas, números e hífen, entre 2 e 40 caracteres."
+              value={id}
+              onChange={(e) => setId(e.target.value.toLowerCase())}
+              placeholder="id-curto"
+            />
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
+              Só letras minúsculas, números e hífen -- validado também no servidor.
+            </div>
           </div>
         )}
 

@@ -48,6 +48,8 @@ function BranchBlock({ branch, onChanged }: { branch: Branch; onChanged: () => v
   const [newLabel, setNewLabel] = useState('');
   const [busy, setBusy] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [removeError, setRemoveError] = useState<string | null>(null);
+  const [removingBranch, setRemovingBranch] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
   async function refreshCounters() {
@@ -83,12 +85,17 @@ function BranchBlock({ branch, onChanged }: { branch: Branch; onChanged: () => v
   }
 
   async function handleRemoveBranch() {
+    if (removingBranch) return;
     if (!confirm(`Remover a filial "${branch.name}"? Só é possível se não tiver balcões nem senhas associadas.`)) return;
+    setRemovingBranch(true);
+    setRemoveError(null);
     try {
       await deleteBranch(branch.institutionId, branch.id);
       onChanged();
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Não foi possível remover.');
+      setRemoveError(err instanceof Error ? err.message : 'Não foi possível remover.');
+    } finally {
+      setRemovingBranch(false);
     }
   }
 
@@ -98,12 +105,13 @@ function BranchBlock({ branch, onChanged }: { branch: Branch; onChanged: () => v
         <button onClick={() => setOpen((v) => !v)} style={{ background: 'none', border: 'none', fontSize: 12.5, fontWeight: 700, flex: 1, textAlign: 'left' }}>
           {open ? '▾' : '▸'} {branch.name} <span style={{ fontWeight: 500, color: 'var(--text-muted)' }}>({branch.id})</span>
         </button>
-        <button onClick={handleRemoveBranch} className="fc-btn fc-btn--outline" style={{ width: 26, height: 26, padding: 0 }}>
+        <button disabled={removingBranch} onClick={handleRemoveBranch} className="fc-btn fc-btn--outline" style={{ width: 26, height: 26, padding: 0 }}>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#D8434F" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
           </svg>
         </button>
       </div>
+      {removeError && <div style={{ padding: '0 12px 8px', fontSize: 11.5, color: 'var(--red)' }}>{removeError}</div>}
       {open && (
         <div style={{ padding: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
           {loading ? (
@@ -116,7 +124,16 @@ function BranchBlock({ branch, onChanged }: { branch: Branch; onChanged: () => v
             counters.map((c) => <CounterRow key={c.id} counter={c} onRemoved={refreshCounters} />)
           )}
           <form onSubmit={handleAddCounter} style={{ display: 'flex', gap: 6 }}>
-            <input className="fc-input" placeholder="id" required value={newId} onChange={(e) => setNewId(e.target.value)} style={{ flex: '0 1 80px' }} />
+            <input
+              className="fc-input"
+              placeholder="id"
+              required
+              pattern="[a-z0-9-]{2,40}"
+              title="Só letras minúsculas, números e hífen, entre 2 e 40 caracteres."
+              value={newId}
+              onChange={(e) => setNewId(e.target.value.toLowerCase())}
+              style={{ flex: '0 1 80px' }}
+            />
             <input className="fc-input" placeholder="Rótulo (ex.: Balcão 4)" required value={newLabel} onChange={(e) => setNewLabel(e.target.value)} style={{ flex: 1 }} />
             <button type="submit" disabled={busy} className="fc-btn fc-btn--secondary">+</button>
           </form>
@@ -171,7 +188,16 @@ export function BranchesPanel({ institutionId, institutionName, onClose }: { ins
   return (
     <SidePanel title={`Balcões — ${institutionName}`} subtitle="Filiais e balcões desta empresa -- clique numa filial para ver/gerir os seus balcões." onClose={onClose}>
       <form onSubmit={handleAddBranch} style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
-        <input className="fc-input" placeholder="id" required value={newId} onChange={(e) => setNewId(e.target.value)} style={{ flex: '0 1 90px' }} />
+        <input
+          className="fc-input"
+          placeholder="id"
+          required
+          pattern="[a-z0-9-]{2,40}"
+          title="Só letras minúsculas, números e hífen, entre 2 e 40 caracteres."
+          value={newId}
+          onChange={(e) => setNewId(e.target.value.toLowerCase())}
+          style={{ flex: '0 1 90px' }}
+        />
         <input className="fc-input" placeholder="Nome da filial" required value={newName} onChange={(e) => setNewName(e.target.value)} style={{ flex: 1 }} />
         <button type="submit" disabled={busy} className="fc-btn fc-btn--primary">+</button>
       </form>

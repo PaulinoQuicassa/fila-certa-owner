@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { supabase } from '../supabase';
+import { reportError } from '../sentry';
 import type { OwnerProfile } from '../types';
 
 // Estado de MFA da sessão actual -- Fase 6 do hardening ("MFA
@@ -72,10 +73,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async function applySession(u: User | null) {
       setUser(u);
       if (u) {
-        const [p, mfa] = await Promise.all([fetchOwnerProfile(u.id), computeMfaState()]);
-        if (active) {
-          setProfile(p);
-          setMfaState(mfa);
+        try {
+          const [p, mfa] = await Promise.all([fetchOwnerProfile(u.id), computeMfaState()]);
+          if (active) {
+            setProfile(p);
+            setMfaState(mfa);
+          }
+        } catch (err) {
+          // Antes disto, uma falha aqui (rede, RPC da Auth em baixo)
+          // ficava por resolver para sempre -- `loading` nunca voltava
+          // a `false` e a consola mostrava um ecrã em branco
+          // indefinidamente, sem nenhum registo do que aconteceu.
+          reportError(err, { flow: 'owner_session_bootstrap' });
+          if (active) {
+            setProfile(null);
+            setMfaState('checking');
+          }
         }
       } else if (active) {
         setProfile(null);
@@ -125,7 +138,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function login(email: string, password: string) {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error || !data.user) throw error ?? new Error('login-failed');
+    if (error || !data.user) {
+      // Nunca o email/password -- só a classificação do erro, para
+      // detectar um pico de falhas de login sem guardar quem tentou.
+      reportError(error ?? new Error('login-failed'), { flow: 'owner_login', authErrorCode: error?.code });
+      throw error ?? new Error('login-failed');
+    }
     const p = await fetchOwnerProfile(data.user.id);
     if (!p) {
       await supabase.auth.signOut();

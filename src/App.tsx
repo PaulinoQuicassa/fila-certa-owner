@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import * as Sentry from '@sentry/react';
 import { AuthProvider, useAuth } from './auth/AuthContext';
 import { Login } from './pages/Login';
 import { MfaEnroll } from './pages/MfaEnroll';
@@ -8,6 +9,18 @@ import { Institutions } from './pages/Institutions';
 import { AccessProfiles } from './pages/AccessProfiles';
 import { Staff } from './pages/Staff';
 import { Owners } from './pages/Owners';
+
+function CrashFallback() {
+  return (
+    <div style={{ padding: 40, textAlign: 'center', fontFamily: 'sans-serif' }}>
+      <h2>Ocorreu um erro inesperado.</h2>
+      <p>A equipa técnica já foi notificada. Recarregue a página para continuar.</p>
+      <button onClick={() => window.location.reload()} style={{ marginTop: 16, padding: '10px 20px' }}>
+        Recarregar
+      </button>
+    </div>
+  );
+}
 
 function OwnerConsole() {
   const [tab, setTab] = useState<TabId>('empresas');
@@ -24,9 +37,11 @@ function OwnerConsole() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <Gate />
-    </AuthProvider>
+    <Sentry.ErrorBoundary fallback={<CrashFallback />}>
+      <AuthProvider>
+        <Gate />
+      </AuthProvider>
+    </Sentry.ErrorBoundary>
   );
 }
 

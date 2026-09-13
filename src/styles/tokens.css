@@ -42,6 +42,19 @@ body {
 
 button { font-family: inherit; cursor: pointer; }
 input, select { font-family: inherit; }
+
+:focus-visible {
+  outline: 2px solid var(--brand-blue);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
 a { color: var(--brand-blue); text-decoration: none; }
 a:hover { color: var(--brand-blue-hover); }
 

@@ -23,7 +23,7 @@ export function MfaChallenge() {
       const verified = data?.totp.find((f) => f.status === 'verified');
       if (listError || !verified) {
         reportError(listError ?? new Error('mfa-challenge-no-verified-factor'), { flow: 'owner_mfa_challenge_init' });
-        setLoadError('Não foi possível carregar o factor de MFA. Tenta recarregar a página.');
+        setLoadError('Não foi possível carregar a verificação. Recarregue a página.');
         return;
       }
       setFactorId(verified.id);
@@ -40,7 +40,7 @@ export function MfaChallenge() {
     try {
       const { error: verifyError } = await supabase.auth.mfa.challengeAndVerify({ factorId, code: code.trim() });
       if (verifyError) {
-        setError('Código inválido ou expirado.');
+        setError('O código não está correcto. Tente novamente.');
         return;
       }
       await refreshMfaState();
@@ -55,21 +55,25 @@ export function MfaChallenge() {
         <div>
           <div style={{ fontFamily: 'var(--font-head)', fontSize: 20, fontWeight: 700, color: 'var(--brand-blue)' }}>Código de verificação</div>
           <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 6 }}>
-            Introduz o código de 6 dígitos da tua app de autenticação.
+            Introduza o código de 6 dígitos da sua app de autenticação.
           </div>
         </div>
 
         {loadError && <div style={{ fontSize: 13, color: 'var(--red)' }}>{loadError}</div>}
 
-        <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>
+        <label htmlFor="owner-mfa-code" style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>
           Código
           <input
+            id="owner-mfa-code"
             type="text"
             inputMode="numeric"
             pattern="[0-9]{6}"
             maxLength={6}
             required
             autoFocus
+            autoComplete="one-time-code"
+            aria-invalid={error ? true : undefined}
+            aria-describedby={error ? 'owner-mfa-error' : undefined}
             value={code}
             onChange={(e) => setCode(e.target.value.replace(/[^0-9]/g, ''))}
             className="fc-input"
@@ -77,7 +81,7 @@ export function MfaChallenge() {
           />
         </label>
 
-        {error && <div style={{ fontSize: 13, color: 'var(--red)' }}>{error}</div>}
+        {error && <div id="owner-mfa-error" role="alert" style={{ fontSize: 13, color: 'var(--red)' }}>{error}</div>}
 
         <button type="submit" disabled={busy || !factorId || code.length !== 6} className="fc-btn fc-btn--primary" style={{ width: '100%', padding: 12, fontSize: 14 }}>
           {busy ? 'A verificar…' : 'Confirmar'}

@@ -24,7 +24,7 @@ export function MfaEnroll() {
       if (cancelled) return;
       if (enrollError || !data) {
         reportError(enrollError ?? new Error('mfa-enroll-no-data'), { flow: 'owner_mfa_enroll_init' });
-        setLoadError('Não foi possível iniciar a inscrição de MFA. Tenta recarregar a página.');
+        setLoadError('Não foi possível iniciar a verificação em dois passos. Recarregue a página.');
         return;
       }
       setFactorId(data.id);

@@ -42,13 +42,7 @@ export function Layout({ tab, onTabChange, children }: { tab: TabId; onTabChange
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', width: 220, borderRadius: 10, border: '1px solid var(--border)', background: 'var(--surface)' }}>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#7C8797" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                <circle cx="11" cy="11" r="7" /><line x1="21" y1="21" x2="16.5" y2="16.5" />
-              </svg>
-              <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Pesquisar…</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingLeft: 16, borderLeft: '1px solid var(--border)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingLeft: 0 }}>
               <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--brand-blue)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700 }}>
                 {initials || '?'}
               </div>
@@ -60,16 +54,21 @@ export function Layout({ tab, onTabChange, children }: { tab: TabId; onTabChange
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 6, marginBottom: 20 }}>
+        <div role="tablist" aria-label="Secções da consola" style={{ display: 'flex', gap: 6, marginBottom: 20 }}>
           {TABS.map((t) => {
             const active = t.id === tab;
             return (
               <button
                 key={t.id}
+                role="tab"
+                type="button"
+                aria-selected={active}
+                tabIndex={active ? 0 : -1}
                 onClick={() => onTabChange(t.id)}
                 style={{
                   padding: '9px 18px', border: 'none', borderBottom: `2px solid ${active ? 'var(--brand-blue)' : 'transparent'}`,
                   background: 'transparent', fontSize: 14, fontWeight: 700, color: active ? 'var(--brand-blue)' : 'var(--text-muted)',
+                  minHeight: 44,
                 }}
               >
                 {t.label}

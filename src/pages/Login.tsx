@@ -37,29 +37,37 @@ export function Login() {
           <div style={{ fontSize: 14, color: 'var(--text-muted)', marginTop: 4 }}>Owner</div>
         </div>
 
-        <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>
+        <label htmlFor="owner-email" style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>
           Email
           <input
+            id="owner-email"
             type="email"
             required
+            autoComplete="username"
+            aria-invalid={error ? true : undefined}
+            aria-describedby={error ? 'owner-login-error' : undefined}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="fc-input"
           />
         </label>
 
-        <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>
+        <label htmlFor="owner-password" style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>
           Palavra-passe
           <input
+            id="owner-password"
             type="password"
             required
+            autoComplete="current-password"
+            aria-invalid={error ? true : undefined}
+            aria-describedby={error ? 'owner-login-error' : undefined}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="fc-input"
           />
         </label>
 
-        {error && <div style={{ fontSize: 13, color: 'var(--red)' }}>{error}</div>}
+        {error && <div id="owner-login-error" role="alert" style={{ fontSize: 13, color: 'var(--red)' }}>{error}</div>}
 
         <button type="submit" disabled={busy} className="fc-btn fc-btn--primary" style={{ width: '100%', padding: 12, fontSize: 14 }}>
           {busy ? 'A entrar…' : 'Entrar'}
